@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+<title>הסוכן האישי של שלומי | גינדי החזקות</title>
+<meta name="description" content="סוכן AI אישי לניתוח נתוני מכירות עבור שלומי, סמנכ"ל מכירות בגינדי החזקות" />
+
+<link rel="manifest" href="/manifest.json" />
+<meta name="theme-color" content="#111111" />
+<link rel="icon" href="/icons/favicon-32.png" sizes="32x32" />
+<link rel="icon" href="/icons/favicon-16.png" sizes="16x16" />
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="apple-mobile-web-app-title" content="סוכן שלומי" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700&family=Assistant:wght@400;500;600;700&family=Cormorant+Garamond:ital@1&display=swap"
+  rel="stylesheet"
+/>
+
+<style>
+/* ============================================================
+   Design tokens — הסוכן האישי של שלומי | גינדי החזקות
+   ============================================================ */
+:root {
+  --ink: #111111;
+  --ink-soft: #1c1a17;
+  --ink-elevated: #232019;
+  --gold: #c6a664;
+  --gold-bright: #e0c483;
+  --gold-deep: #8f7238;
+  --paper: #faf8f4;
+  --white: #ffffff;
+  --grey: #6b6660;
+  --grey-soft: #a49d90;
+  --line: rgba(198, 166, 100, 0.28);
+  --error: #a5402f;
+
+  --font-display: "Frank Ruhl Libre", "David Libre", serif;
+  --font-body: "Assistant", "Segoe UI", sans-serif;
+  --font-caption: "Cormorant Garamond", serif;
+
+  --radius: 14px;
+  --shadow-soft: 0 20px 60px -20px rgba(17, 17, 17, 0.35);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--ink);
+  font-family: var(--font-body);
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+body {
+  direction: rtl;
+}
+
+button {
+  font-family: inherit;
+}
+
+::selection {
+  background: var(--gold);
+  color: var(--ink);
+}
+
+#app {
+  position: relative;
+  width: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--ink);
+}
+
+.screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.55s ease;
+}
+
+.screen.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ============================================================
+   Splash screen
+   ============================================================ */
+#screen-splash {
+  background: var(--paper);
+  cursor: pointer;
+}
+
+.splash-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;
+  transform: translateY(8px);
+  opacity: 0;
+  animation: splash-rise 1s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards;
+}
+
+@keyframes splash-rise {
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.splash-logo {
+  width: 220px;
+  max-width: 62vw;
+  height: auto;
+  display: block;
+}
+
+.splash-flourish {
+  width: 160px;
+  height: 14px;
+  overflow: visible;
+}
+
+.splash-flourish path {
+  fill: none;
+  stroke: var(--gold-deep);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-dasharray: 240;
+  stroke-dashoffset: 240;
+  animation: draw-flourish 1.1s cubic-bezier(0.65, 0, 0.35, 1) 0.9s forwards;
+}
+
+@keyframes draw-flourish {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.splash-caption {
+  font-family: var(--font-caption);
+  font-style: italic;
+  font-size: 15px;
+  letter-spacing: 0.34em;
+  color: var(--grey);
+  text-transform: uppercase;
+  direction: ltr;
+  opacity: 0;
+  animation: caption-in 0.9s ease 1.5s forwards;
+}
+
+@keyframes caption-in {
+  to {
+    opacity: 1;
+  }
+}
+
+.splash-hint {
+  position: absolute;
+  bottom: 42px;
+  font-size: 12px;
+  color: var(--grey-soft);
+  letter-spacing: 0.08em;
+  opacity: 0;
+  animation: caption-in 0.9s ease 2.4s forwards;
+}
+
+/* ============================================================
+   Login screen
+   ============================================================ */
+#screen-login {
+  background: radial-gradient(ellipse at 50% -10%, #232019 0%, var(--ink) 62%);
+  padding: 32px 24px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.login-logo {
+  width: 128px;
+  height: auto;
+  margin-bottom: 18px;
+  filter: brightness(0) invert(1);
+}
+
+.login-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  color: var(--white);
+  margin: 0 0 4px;
+  text-align: center;
+}
+
+.login-subtitle {
+  font-size: 14px;
+  color: var(--grey-soft);
+  margin: 0 0 28px;
+  text-align: center;
+}
+
+.login-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field label {
+  font-size: 13px;
+  color: var(--gold);
+  letter-spacing: 0.02em;
+}
+
+.field input {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(198, 166, 100, 0.3);
+  border-radius: 10px;
+  padding: 14px 16px;
+  font-size: 16px;
+  color: var(--white);
+  outline: none;
+  transition: border-color 0.2s ease, background 0.2s ease;
+  direction: ltr;
+  text-align: right;
+}
+
+.field input::placeholder {
+  color: var(--grey);
+}
+
+.field input:focus {
+  border-color: var(--gold);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.login-error {
+  min-height: 18px;
+  font-size: 13px;
+  color: var(--error);
+  text-align: center;
+}
+
+.btn-primary {
+  margin-top: 6px;
+  background: linear-gradient(135deg, var(--gold-bright), var(--gold-deep));
+  color: var(--ink);
+  border: none;
+  border-radius: 10px;
+  padding: 15px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px -8px rgba(198, 166, 100, 0.45);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+/* ============================================================
+   Chat screen
+   ============================================================ */
+#screen-chat {
+  background: var(--paper);
+  align-items: stretch;
+  justify-content: flex-start;
+}
+
+.chat-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: var(--ink);
+  border-bottom: 1px solid var(--line);
+  position: relative;
+  z-index: 2;
+}
+
+.chat-header::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+
+.chat-header img {
+  width: 34px;
+  height: auto;
+  filter: brightness(0) invert(1);
+}
+
+.chat-header-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.chat-header-text strong {
+  font-family: var(--font-display);
+  color: var(--white);
+  font-size: 15px;
+}
+
+.chat-header-text span {
+  font-size: 12px;
+  color: var(--gold);
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #6bbf7a;
+  display: inline-block;
+  margin-left: 6px;
+  box-shadow: 0 0 0 3px rgba(107, 191, 122, 0.18);
+}
+
+.chat-logout {
+  margin-right: auto;
+  background: none;
+  border: 1px solid rgba(198, 166, 100, 0.35);
+  color: var(--grey-soft);
+  font-size: 12px;
+  padding: 7px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.chat-logout:hover {
+  color: var(--gold);
+  border-color: var(--gold);
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.msg {
+  max-width: 84%;
+  padding: 13px 16px;
+  border-radius: var(--radius);
+  font-size: 15px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  animation: msg-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes msg-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.msg.assistant {
+  align-self: flex-start;
+  background: var(--white);
+  color: var(--ink);
+  border: 1px solid rgba(17, 17, 17, 0.06);
+  border-right: 3px solid var(--gold);
+  box-shadow: var(--shadow-soft);
+}
+
+.msg.user {
+  align-self: flex-end;
+  background: var(--ink);
+  color: var(--paper);
+  border-left: 3px solid var(--gold);
+}
+
+.msg.error {
+  align-self: center;
+  background: rgba(165, 64, 47, 0.08);
+  color: var(--error);
+  border: 1px solid rgba(165, 64, 47, 0.25);
+  font-size: 13px;
+  text-align: center;
+}
+
+.typing {
+  align-self: flex-start;
+  display: flex;
+  gap: 5px;
+  padding: 14px 18px;
+  background: var(--white);
+  border-radius: var(--radius);
+  border-right: 3px solid var(--gold);
+  box-shadow: var(--shadow-soft);
+}
+
+.typing span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gold-deep);
+  animation: typing-bounce 1.1s ease-in-out infinite;
+}
+
+.typing span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.typing span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes typing-bounce {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  30% {
+    transform: translateY(-5px);
+    opacity: 1;
+  }
+}
+
+.chat-input-bar {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--white);
+  border-top: 1px solid rgba(17, 17, 17, 0.08);
+}
+
+.chat-input-bar textarea {
+  flex: 1;
+  resize: none;
+  border: 1px solid rgba(17, 17, 17, 0.12);
+  border-radius: 20px;
+  padding: 12px 18px;
+  font-size: 15px;
+  font-family: inherit;
+  max-height: 120px;
+  outline: none;
+  background: var(--paper);
+  transition: border-color 0.2s ease;
+}
+
+.chat-input-bar textarea:focus {
+  border-color: var(--gold);
+}
+
+.send-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: var(--ink);
+  color: var(--gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.send-btn:hover {
+  background: var(--ink-elevated);
+  transform: scale(1.05);
+}
+
+.send-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+  transform: none;
+}
+
+.send-btn svg {
+  width: 18px;
+  height: 18px;
+  transform: scaleX(-1); /* arrow points into RTL flow */
+}
+
+/* Scrollbar polish */
+.chat-messages::-webkit-scrollbar {
+  width: 6px;
+}
+.chat-messages::-webkit-scrollbar-thumb {
+  background: rgba(198, 166, 100, 0.35);
+  border-radius: 3px;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Focus visibility */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* Small screens */
+@media (max-width: 380px) {
+  .login-card {
+    max-width: 100%;
+  }
+  .msg {
+    max-width: 90%;
+  }
+}
+
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ============ SPLASH ============ -->
+  <section id="screen-splash" class="screen active">
+    <div class="splash-inner">
+      <img src="/icons/logo.png" alt="Gindi" class="splash-logo" />
+      <svg class="splash-flourish" viewBox="0 0 160 14" xmlns="http://www.w3.org/2000/svg">
+        <path d="M2 8 C 40 -2, 70 14, 100 6 S 150 -2, 158 7" />
+      </svg>
+      <div class="splash-caption">Shlomi's Robot</div>
+    </div>
+    <div class="splash-hint">גע כדי להמשיך</div>
+  </section>
+
+  <!-- ============ LOGIN ============ -->
+  <section id="screen-login" class="screen">
+    <div class="login-card">
+      <img src="/icons/logo.png" alt="Gindi" class="login-logo" />
+      <h1 class="login-title">הסוכן האישי של שלומי</h1>
+      <p class="login-subtitle">כניסה מאובטחת לסוכן האישי</p>
+
+      <form class="login-form" id="login-form" autocomplete="off">
+        <div class="field">
+          <label for="phone">מספר נייד</label>
+          <input type="tel" id="phone" placeholder="050-0000000" inputmode="numeric" required />
+        </div>
+        <div class="field">
+          <label for="password">סיסמה</label>
+          <input type="password" id="password" placeholder="••••" required />
+        </div>
+        <div class="login-error" id="login-error"></div>
+        <button type="submit" class="btn-primary">כניסה</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- ============ CHAT ============ -->
+  <section id="screen-chat" class="screen">
+    <header class="chat-header">
+      <img src="/icons/logo.png" alt="Gindi" />
+      <div class="chat-header-text">
+        <strong id="agent-name">הסוכן האישי של שלומי</strong>
+        <span><span class="status-dot"></span>מחובר</span>
+      </div>
+      <button class="chat-logout" id="logout-btn">התנתקות</button>
+    </header>
+
+    <div class="chat-messages" id="chat-messages"></div>
+
+    <div class="chat-input-bar">
+      <textarea
+        id="chat-input"
+        rows="1"
+        placeholder="שאל אותי שאלה…"
+      ></textarea>
+      <button class="send-btn" id="send-btn" aria-label="שלח">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"></line>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        </svg>
+      </button>
+    </div>
+  </section>
+
+</div>
+
+<script>
+// ============================================================================
+// ⚠️ הגדרות הסמנכ"ל — הבלוק היחיד שצריך לערוך כדי לשכפל את התבנית הזו
+// ============================================================================
+window.AGENT_CONFIG = {
+  // כתובת ה-Webhook (Production) של ה-Chat Trigger ב-n8n עבור הסוכן הזה
+  WEBHOOK_URL: "https://jonathangindi.app.n8n.cloud/webhook/7be4e533-03ee-48bb-aebd-37c4e681445c/chat",
+
+  // פרטי ההתחברות של הסמנכ"ל
+  AUTH: {
+    phone: "0507335885",
+    password: "1194",
+  },
+
+  // הודעת הפתיחה בצ'אט
+  WELCOME_MESSAGE:
+    "היי שלומי, אני הסוכן האישי שלך :)\nתוכל לשאול אותי שאלות על נתוני המכירות בחברת גינדי, ובנוסף תוכל להיעזר בי בבדיקת נתונים בתחום מכירת הדירות בשוק החופשי.\nאני לרשותך :)",
+
+  // שם התצוגה בכותרת הצ'אט
+  AGENT_NAME: "הסוכן האישי של שלומי",
+};
+// ============================================================================
+// סוף בלוק ההגדרות — אין צורך לגעת בקוד שמתחת לשורה הזו
+// ============================================================================
+
+(function () {
+  "use strict";
+
+  const CONFIG = window.AGENT_CONFIG || {};
+  const STORAGE_AUTH = "shlomi_agent_auth";
+  const STORAGE_SESSION = "shlomi_agent_session_id";
+
+  const screens = {
+    splash: document.getElementById("screen-splash"),
+    login: document.getElementById("screen-login"),
+    chat: document.getElementById("screen-chat"),
+  };
+
+  function showScreen(name) {
+    Object.values(screens).forEach((el) => el.classList.remove("active"));
+    screens[name].classList.add("active");
+  }
+
+  // ============================================================
+  // Splash
+  // ============================================================
+  let splashAdvanced = false;
+  function advanceFromSplash() {
+    if (splashAdvanced) return;
+    splashAdvanced = true;
+    const isAuthed = localStorage.getItem(STORAGE_AUTH) === "true";
+    showScreen(isAuthed ? "chat" : "login");
+    if (isAuthed) initChat();
+  }
+
+  screens.splash.addEventListener("click", advanceFromSplash);
+  setTimeout(advanceFromSplash, 2600);
+
+  // ============================================================
+  // Login
+  // ============================================================
+  const loginForm = document.getElementById("login-form");
+  const loginError = document.getElementById("login-error");
+
+  function normalizePhone(value) {
+    return value.replace(/[\s-]/g, "");
+  }
+
+  loginForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const phone = normalizePhone(document.getElementById("phone").value.trim());
+    const password = document.getElementById("password").value.trim();
+    const expectedPhone = normalizePhone(CONFIG.AUTH?.phone || "");
+    const expectedPassword = CONFIG.AUTH?.password || "";
+
+    if (phone === expectedPhone && password === expectedPassword) {
+      loginError.textContent = "";
+      localStorage.setItem(STORAGE_AUTH, "true");
+      showScreen("chat");
+      initChat();
+    } else {
+      loginError.textContent = "מספר נייד או סיסמה שגויים";
+      document.getElementById("password").value = "";
+    }
+  });
+
+  document.getElementById("logout-btn").addEventListener("click", () => {
+    localStorage.removeItem(STORAGE_AUTH);
+    document.getElementById("phone").value = "";
+    document.getElementById("password").value = "";
+    showScreen("login");
+  });
+
+  // ============================================================
+  // Chat
+  // ============================================================
+  const messagesEl = document.getElementById("chat-messages");
+  const inputEl = document.getElementById("chat-input");
+  const sendBtn = document.getElementById("send-btn");
+  let chatInitialized = false;
+
+  function getSessionId() {
+    let id = localStorage.getItem(STORAGE_SESSION);
+    if (!id) {
+      id =
+        (window.crypto && crypto.randomUUID) ?
+        crypto.randomUUID() :
+        "sess-" + Date.now() + "-" + Math.random().toString(16).slice(2);
+      localStorage.setItem(STORAGE_SESSION, id);
+    }
+    return id;
+  }
+
+  function addMessage(text, role) {
+    const bubble = document.createElement("div");
+    bubble.className = "msg " + role;
+    bubble.textContent = text;
+    messagesEl.appendChild(bubble);
+    scrollToBottom();
+    return bubble;
+  }
+
+  function showTyping() {
+    const typing = document.createElement("div");
+    typing.className = "typing";
+    typing.id = "typing-indicator";
+    typing.innerHTML = "<span></span><span></span><span></span>";
+    messagesEl.appendChild(typing);
+    scrollToBottom();
+  }
+
+  function hideTyping() {
+    const el = document.getElementById("typing-indicator");
+    if (el) el.remove();
+  }
+
+  function scrollToBottom() {
+    requestAnimationFrame(() => {
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    });
+  }
+
+  function initChat() {
+    if (chatInitialized) return;
+    chatInitialized = true;
+    if (CONFIG.AGENT_NAME) {
+      document.getElementById("agent-name").textContent = CONFIG.AGENT_NAME;
+    }
+    if (CONFIG.WELCOME_MESSAGE) {
+      addMessage(CONFIG.WELCOME_MESSAGE, "assistant");
+    }
+    inputEl.focus();
+  }
+
+  async function sendMessage() {
+    const text = inputEl.value.trim();
+    if (!text) return;
+
+    const webhookUrl = CONFIG.WEBHOOK_URL;
+    if (!webhookUrl || webhookUrl.indexOf("PASTE_YOUR") === 0) {
+      addMessage(
+        "הסוכן עדיין לא מחובר — יש להזין את כתובת ה-Webhook בקובץ config.js",
+        "error"
+      );
+      return;
+    }
+
+    addMessage(text, "user");
+    inputEl.value = "";
+    autosize();
+    sendBtn.disabled = true;
+    showTyping();
+
+    try {
+      const response = await fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "sendMessage",
+          sessionId: getSessionId(),
+          chatInput: text,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("HTTP " + response.status);
+      }
+
+      const data = await response.json();
+      const reply =
+        data.output ??
+        data.text ??
+        data.message ??
+        data.chatOutput ??
+        (typeof data === "string" ? data : null);
+
+      hideTyping();
+
+      if (reply) {
+        addMessage(reply, "assistant");
+      } else {
+        addMessage("התקבלה תשובה ריקה מהסוכן. נסה שוב.", "error");
+      }
+    } catch (err) {
+      hideTyping();
+      addMessage(
+        "לא הצלחתי להתחבר לסוכן כרגע. בדוק את החיבור ונסה שוב.",
+        "error"
+      );
+      console.error("Agent request failed:", err);
+    } finally {
+      sendBtn.disabled = false;
+      inputEl.focus();
+    }
+  }
+
+  function autosize() {
+    inputEl.style.height = "auto";
+    inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + "px";
+  }
+
+  inputEl.addEventListener("input", autosize);
+  inputEl.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+  sendBtn.addEventListener("click", sendMessage);
+
+  // ============================================================
+  // Service worker (PWA)
+  // ============================================================
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("/sw.js").catch((err) => {
+        console.warn("Service worker registration failed:", err);
+      });
+    });
+  }
+})();
+
+</script>
+</body>
+</html>
